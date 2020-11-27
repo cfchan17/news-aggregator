@@ -1,19 +1,18 @@
 import { Injectable } from "@angular/core";
 import Dexie from 'dexie';
-import { promise } from 'protractor';
 import { NewsArticle, Key, Country } from './models';
 
 @Injectable()
 export class NewsAGDatabase extends Dexie {
 
-  private newsResults: Dexie.Table<NewsArticle, number>;
+  private newsResults: Dexie.Table<NewsArticle, string>;
   private keyRecords: Dexie.Table<Key, string>;
   private countryList: Dexie.Table<Country, string>;
 
   constructor() {
     super('NewsAG')
     this.version(1).stores({
-      newsResults: '++id,country',
+      newsResults: '[country+title+author]',
       keyRecords: 'apiKey',
       countryList: 'alpha2Code'
     })
@@ -37,6 +36,10 @@ export class NewsAGDatabase extends Dexie {
     return await this.keyRecords.put(k);
   }
 
+  async getAPIKey(): Promise<Key> {
+      return await this.keyRecords.toArray()[0];
+  }
+
   async deleteAPIKey(k: string): Promise<any> {
       return await this.keyRecords.delete(k);
   }
@@ -57,6 +60,40 @@ export class NewsAGDatabase extends Dexie {
 
   async getAllCountries(): Promise<Country[]> {
       return await this.countryList.toArray();
+  }
+
+  async getCountryByCode(code: string): Promise<Country> {
+      return await this.countryList.get(code);
+  }
+
+  async getNewsArticlesByCountry(country: Country): Promise<NewsArticle[]> {
+    console.log('>>>>>>>>>',country);
+    const resultArray = await this.newsResults.where('country').equals(country.alpha2Code).toArray();
+    if(resultArray.length > 0) {
+        let finalArray: NewsArticle[] = [];
+        let deleteArray: NewsArticle[] = [];
+        for(let i = 0; i < resultArray.length; i++) {
+            let cachedDatetime: Date = new Date(resultArray[i].timestamp);
+            if(resultArray[i].saved) {
+                finalArray.push(resultArray[i]);
+            }
+            else if(new Date().getTime() - cachedDatetime.getTime() <= 300000) {
+                finalArray.push(resultArray[i]);
+            }
+            else {
+                deleteArray.push(resultArray[i]);
+            }
+        }
+        //article delete
+        return finalArray;
+    }
+    else {
+        return resultArray;
+    }
+  }
+
+  async addNewsArticles(newsArticles: NewsArticle[]): Promise<any> {
+    return await this.newsResults.bulkAdd(newsArticles);
   }
 
 /* hehe

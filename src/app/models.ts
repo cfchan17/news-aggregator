@@ -1,7 +1,14 @@
 export interface NewsArticle {
-    id?: number;
-    title: string;
     country: string;
+    timestamp: string;
+    saved: boolean;
+    author: string;
+    title: string;
+    description: string;
+    url:string;
+    urlToImage: string;
+    publishedAt: string;
+    content: string;
 }
 
 export interface Key {

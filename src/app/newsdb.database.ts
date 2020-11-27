@@ -84,7 +84,10 @@ export class NewsAGDatabase extends Dexie {
                 deleteArray.push(resultArray[i]);
             }
         }
-        //article delete
+        let deleteKeyArray = deleteArray.map(v => {
+            return v.id;
+        });
+        await this.newsResults.bulkDelete(deleteKeyArray);
         return finalArray;
     }
     else {

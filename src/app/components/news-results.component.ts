@@ -20,23 +20,6 @@ export class NewsResultsComponent implements OnInit {
     this.newsdb.getCountryByCode(this.activatedRoute.snapshot.params['country'])
       .then(result => {
         this.country = result;
-
-        /*
-        this.newsdb.getNewsArticlesByCountry(result)
-          .then(result => {
-
-            
-            if(res.length == 0) {
-              this.getHttpNewsArticles(this.country)
-                .then(queryResult => {
-                  this.newsArticles = this.newsArticles.concat(queryResult);
-                  console.log(this.newsArticles);
-                });
-            }
-            
-
-          });
-          */
         
         this.newsdb.getNewsArticlesByCountry(result)
           .then(articles => {
@@ -51,7 +34,8 @@ export class NewsResultsComponent implements OnInit {
               if(nonSavedArticles.length == 0) {
                 this.getHttpNewsArticles(this.country)
                   .then(queryResult => {
-                    this.newsArticles = this.newsArticles.concat(queryResult);
+                    
+                    this.newsArticles = this.newsArticles.concat(this.getFreshArticles(queryResult));
                     this.newsdb.addNewsArticles(this.newsArticles);
                   });
               }
@@ -59,12 +43,24 @@ export class NewsResultsComponent implements OnInit {
             else {
               this.getHttpNewsArticles(this.country)
                 .then(queryResult => {
-                  this.newsArticles = this.newsArticles.concat(queryResult);
+                  this.newsArticles = this.newsArticles.concat(this.getFreshArticles(queryResult));
                   this.newsdb.addNewsArticles(this.newsArticles);
                 });
             }
           });
       });
+  }
+
+  getFreshArticles(articles: NewsArticle[]): NewsArticle[] {
+    let keepArticles: NewsArticle[] = [];
+    articles.forEach(v => {
+      let currentDatetime = new Date();
+      let articleDatetime = new Date(v.publishedAt);
+      if (currentDatetime.getTime() - articleDatetime.getTime() <= 300000) {
+        keepArticles.push(v);
+      }
+    });
+    return keepArticles;
   }
 
   async getHttpNewsArticles(country: Country): Promise<NewsArticle[]> {

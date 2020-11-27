@@ -35,7 +35,7 @@ export class NewsResultsComponent implements OnInit {
                 this.getHttpNewsArticles(this.country)
                   .then(queryResult => {
                     
-                    this.newsArticles = this.newsArticles.concat(this.getFreshArticles(queryResult));
+                    this.newsArticles = this.newsArticles.concat(queryResult);
                     this.newsdb.addNewsArticles(this.newsArticles);
                   });
               }
@@ -43,24 +43,12 @@ export class NewsResultsComponent implements OnInit {
             else {
               this.getHttpNewsArticles(this.country)
                 .then(queryResult => {
-                  this.newsArticles = this.newsArticles.concat(this.getFreshArticles(queryResult));
+                  this.newsArticles = this.newsArticles.concat(queryResult);
                   this.newsdb.addNewsArticles(this.newsArticles);
                 });
             }
           });
       });
-  }
-
-  getFreshArticles(articles: NewsArticle[]): NewsArticle[] {
-    let keepArticles: NewsArticle[] = [];
-    articles.forEach(v => {
-      let currentDatetime = new Date();
-      let articleDatetime = new Date(v.publishedAt);
-      if (currentDatetime.getTime() - articleDatetime.getTime() <= 300000) {
-        keepArticles.push(v);
-      }
-    });
-    return keepArticles;
   }
 
   async getHttpNewsArticles(country: Country): Promise<NewsArticle[]> {

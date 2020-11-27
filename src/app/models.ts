@@ -1,4 +1,6 @@
 export interface NewsArticle {
+    id?: number;
+    source: string;
     country: string;
     timestamp: string;
     saved: boolean;

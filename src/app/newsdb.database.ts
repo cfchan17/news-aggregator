@@ -5,14 +5,14 @@ import { NewsArticle, Key, Country } from './models';
 @Injectable()
 export class NewsAGDatabase extends Dexie {
 
-  private newsResults: Dexie.Table<NewsArticle, string>;
+  private newsResults: Dexie.Table<NewsArticle, number>;
   private keyRecords: Dexie.Table<Key, string>;
   private countryList: Dexie.Table<Country, string>;
 
   constructor() {
     super('NewsAG')
     this.version(1).stores({
-      newsResults: '[country+title+author]',
+      newsResults: '++id, country',
       keyRecords: 'apiKey',
       countryList: 'alpha2Code'
     })
@@ -36,8 +36,9 @@ export class NewsAGDatabase extends Dexie {
     return await this.keyRecords.put(k);
   }
 
-  async getAPIKey(): Promise<Key> {
-      return await this.keyRecords.toArray()[0];
+  async getAPIKey(): Promise<Key[]> {
+      const key = await this.keyRecords.toArray();
+      return key
   }
 
   async deleteAPIKey(k: string): Promise<any> {
@@ -67,7 +68,6 @@ export class NewsAGDatabase extends Dexie {
   }
 
   async getNewsArticlesByCountry(country: Country): Promise<NewsArticle[]> {
-    console.log('>>>>>>>>>',country);
     const resultArray = await this.newsResults.where('country').equals(country.alpha2Code).toArray();
     if(resultArray.length > 0) {
         let finalArray: NewsArticle[] = [];
@@ -93,7 +93,7 @@ export class NewsAGDatabase extends Dexie {
   }
 
   async addNewsArticles(newsArticles: NewsArticle[]): Promise<any> {
-    return await this.newsResults.bulkAdd(newsArticles);
+    return await this.newsResults.bulkPut(newsArticles);
   }
 
 /* hehe
